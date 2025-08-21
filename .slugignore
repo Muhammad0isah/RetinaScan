@@ -1,0 +1,39 @@
+# Ignore documentation and notebooks
+*.md
+*.rst
+*.txt
+*.ipynb
+
+# Ignore data files
+*.csv
+*.tsv
+*.json
+*.xml
+*.yml
+*.yaml
+*.xls
+*.xlsx
+*.db
+*.sqlite3
+
+# Ignore cache / temp files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.swp
+*.tmp
+*.log
+
+# Ignore tests & docs
+tests/
+docs/
+
+# Ignore virtual environment folders
+env/
+venv/
+.venv/
+
+
+
+
