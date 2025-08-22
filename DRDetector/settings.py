@@ -25,8 +25,8 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    '.onrender.com',
-    'diabetic-retinopathy-detector-c1br.onrender.com'
+    'retinascan-ebc4e1faa232.herokuapp.com',
+    'https://retinascan-ebc4e1faa232.herokuapp.com/',
 ]
 
 # Application definition

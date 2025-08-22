@@ -8,6 +8,8 @@ from tensorflow.keras.models import load_model
 from django.core.files.storage import default_storage
 from django.http import JsonResponse
 import logging
+import matplotlib.pyplot as plt
+from PIL import Image as PILImage
 
 from detector.forms import UploadImageForm
 
@@ -42,51 +44,45 @@ diagnosis_mapping = {
 }
 
 # ------------------ Preprocessing ------------------
-def crop_image_from_gray(img, tol=7):
-    """Remove black borders from retinal images"""
-    if img.ndim == 2:
-        mask = img > tol
-        return img[np.ix_(mask.any(1), mask.any(0))]
-    elif img.ndim == 3:
+def crop_image_from_gray(img,tol=7):
+    """This Function performs image processing on top of images by performing Gaussian Blur and Circle Crop"""
+    if img.ndim ==2:
+        mask = img>tol
+        return img[np.ix_(mask.any(1),mask.any(0))]
+    elif img.ndim==3:
         gray_img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        mask = gray_img > tol
-        if not mask.any():
-            return img
-        check_shape = img[:, :, 0][np.ix_(mask.any(1), mask.any(0))].shape[0]
-        if check_shape == 0:
-            return img
-        img1 = img[:, :, 0][np.ix_(mask.any(1), mask.any(0))]
-        img2 = img[:, :, 1][np.ix_(mask.any(1), mask.any(0))]
-        img3 = img[:, :, 2][np.ix_(mask.any(1), mask.any(0))]
-        return np.stack([img1, img2, img3], axis=-1)
+        mask = gray_img>tol
+        
+        check_shape = img[:,:,0][np.ix_(mask.any(1),mask.any(0))].shape[0]
+        if (check_shape == 0): # image is too dark so that we crop out everything,
+            return img # return original image
+        else:
+            img1=img[:,:,0][np.ix_(mask.any(1),mask.any(0))]
+            img2=img[:,:,1][np.ix_(mask.any(1),mask.any(0))]
+            img3=img[:,:,2][np.ix_(mask.any(1),mask.any(0))]
+            img = np.stack([img1,img2,img3],axis=-1)
+        return img
 
-def circle_crop(img, sigmaX=30):
+def circle_crop(img, sigmaX=30):   
     """Apply circular crop and preprocessing to retinal images"""
     try:
-        img = crop_image_from_gray(img)
+        # Create circular crop around image centre    
+        img = crop_image_from_gray(img)    
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        h, w, _ = img.shape
-        x, y, r = w // 2, h // 2, min(w, h) // 2
-        
-        # Create circular mask
-        mask = np.zeros((h, w), np.uint8)
-        cv2.circle(mask, (x, y), r, 1, -1)
-        
-        # Apply mask
-        img = cv2.bitwise_and(img, img, mask=mask)
-        
-        # Crop again to remove black borders
+        height, width, depth = img.shape    
+        x = int(width/2)
+        y = int(height/2)
+        r = np.amin((x,y))
+        circle_img = np.zeros((height, width), np.uint8)
+        cv2.circle(circle_img, (x,y), int(r), 1, thickness=-1)
+        img = cv2.bitwise_and(img, img, mask=circle_img)
         img = crop_image_from_gray(img)
-        
-        # Apply enhancement
-        blur = cv2.GaussianBlur(img, (0, 0), sigmaX)
-        enhanced = cv2.addWeighted(img, 4, blur, -4, 128)
-        
-        return enhanced
+        img=cv2.addWeighted(img,4, cv2.GaussianBlur( img , (0,0) , sigmaX) ,-4 ,128)
+        return img
     except Exception as e:
         logger.error(f"Error in circle_crop: {str(e)}")
         # Return resized original image if preprocessing fails
-        return cv2.resize(img, (224, 224))
+        return cv2.resize(img, (224, 224),cv2.COLOR_RGB2GRAY)
 
 # ------------------ Grad-CAM ------------------
 def make_gradcam_heatmap(img_array, model, last_conv_layer_name='conv5_block3_out'):
@@ -129,7 +125,7 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name='conv5_block3_ou
         return np.zeros((7, 7)), 0
 
 def overlay_heatmap(img, heatmap, alpha=0.4, threshold=0.2):
-    """Overlay heatmap on original image"""
+    """Overlay heatmap on original image - keep in RGB format"""
     try:
         # Resize the heatmap to match the size of the original image
         heatmap_resized = cv2.resize(heatmap, (img.shape[1], img.shape[0]))
@@ -140,10 +136,11 @@ def overlay_heatmap(img, heatmap, alpha=0.4, threshold=0.2):
         # Apply threshold to show only strong activations
         heatmap_resized = np.where(heatmap_resized > threshold * 255, heatmap_resized, 0)
         
-        # Apply color map
+        # Apply color map - but convert to RGB immediately
         color_map = cv2.applyColorMap(heatmap_resized, cv2.COLORMAP_JET)
+        color_map = cv2.cvtColor(color_map, cv2.COLOR_BGR2RGB)  # Convert to RGB
         
-        # Overlay the heatmap on the original image
+        # Overlay the heatmap on the original image (both in RGB)
         superimposed_img = cv2.addWeighted(img, 1 - alpha, color_map, alpha, 0)
         
         return superimposed_img
@@ -160,7 +157,8 @@ def preprocess_and_predict(image_path, image_name):
         if img is None:
             raise ValueError("Could not load image")
         
-        preprocessed = circle_crop(img)
+        # Apply the same preprocessing as in notebook with sigmaX=30
+        preprocessed = circle_crop(img, sigmaX=30)
         resized = cv2.resize(preprocessed, (224, 224))
         img_array = np.expand_dims(resized / 255.0, axis=0)
         
@@ -176,13 +174,20 @@ def preprocess_and_predict(image_path, image_name):
         # Ensure media directory exists
         os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
         
-        # Save processed images
+        # Save processed images - preserve RGB format like in notebook with plt.imshow
         pre_path = os.path.join(settings.MEDIA_ROOT, f'preprocessed_{image_name}')
         gradcam_path = os.path.join(settings.MEDIA_ROOT, f'gradcam_{image_name}')
         
-        # Convert RGB back to BGR for saving
-        cv2.imwrite(pre_path, cv2.cvtColor(preprocessed, cv2.COLOR_RGB2BGR))
-        cv2.imwrite(gradcam_path, cv2.cvtColor(gradcam, cv2.COLOR_RGB2BGR))
+        # Ensure images are in proper range [0, 255] and uint8
+        preprocessed_clean = np.clip(preprocessed, 0, 255).astype('uint8')
+        gradcam_clean = np.clip(gradcam, 0, 255).astype('uint8')
+        
+        # Save images in RGB format using PIL (exactly like notebook plt.imshow expects)
+        preprocessed_pil = PILImage.fromarray(preprocessed_clean)
+        preprocessed_pil.save(pre_path, 'PNG')
+        
+        gradcam_pil = PILImage.fromarray(gradcam_clean, mode='RGB')
+        gradcam_pil.save(gradcam_path, 'PNG')
         
         # Format predictions as dictionary with labels and percentages
         probability_dict = {

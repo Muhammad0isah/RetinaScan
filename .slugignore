@@ -1,8 +1,0 @@
-*.md
-*.txt
-*.csv
-*.ipynb
-tests/
-docs/
-__pycache__/
-*.pyc

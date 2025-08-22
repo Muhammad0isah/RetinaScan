@@ -4,6 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Diabetic Retinopathy Detection System</title>
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body {
       margin: 0;
@@ -214,7 +216,7 @@
 
 <!-- Instructions -->
 <div class="instructions">
-  <h3>📋 Instructions:</h3>
+  <h3><i class="fas fa-clipboard-list"></i> Instructions:</h3>
   <ul>
     <li><strong>Upload only retinal fundus images</strong> - taken during an eye examination by an ophthalmologist</li>
     <li>Accepted formats: JPG, PNG, GIF (Maximum file size: 10MB)</li>
@@ -229,7 +231,7 @@
   {% for field, errors in form.errors.items %}
     {% for error in errors %}
       <div class="error-message">
-        ❌ {{ error }}
+        <i class="fas fa-exclamation-circle"></i> {{ error }}
       </div>
     {% endfor %}
   {% endfor %}
@@ -238,7 +240,7 @@
 {% if form.non_field_errors %}
   {% for error in form.non_field_errors %}
     <div class="error-message">
-      ❌ {{ error }}
+      <i class="fas fa-exclamation-circle"></i> {{ error }}
     </div>
   {% endfor %}
 {% endif %}
@@ -246,7 +248,7 @@
 <!-- Success Message -->
 {% if success %}
   <div class="success-message">
-    ✅ Image successfully processed and diagnosed!
+    <i class="fas fa-check-circle"></i> Image successfully processed and diagnosed!
   </div>
 {% endif %}
 
@@ -254,8 +256,8 @@
   {% csrf_token %}
   <div id="drop-zone">
     <div id="drop-instruction">
-      <p>Drag and drop a <strong>retinal fundus image</strong> here, or</p>
-      <label id="file-label" for="id_image">Choose retinal image</label>
+      <p><i class="fas fa-upload"></i> Drag and drop a <strong>retinal fundus image</strong> here, or</p>
+      <label id="file-label" for="id_image"><i class="fas fa-image"></i> Choose retinal image</label>
       <input type="file" name="image" required id="id_image" accept="image/*">
     </div>
     <div class="center-img"><img id="preview-img" src="#" alt="Preview"></div>
@@ -266,38 +268,38 @@
 <!-- Spinner -->
 <div id="loading">
   <div class="spinner"></div>
-  <p style="text-align: center; color: white;">🔍 Analyzing retinal image...</p>
+  <p style="text-align: center; color: white;"><i class="fas fa-cog fa-spin"></i> Processing...</p>
 </div>
 
 <!-- Results Section -->
 {% if prediction %}
 <div id="result-section" style="display: block;">
   <hr>
-  <h2 style="text-align: center;">🏥 Diagnosis Result</h2>
+  <h2 style="text-align: center;"><i class="fas fa-hospital"></i> Diagnosis Result</h2>
   <p style="text-align: center; font-size: 18px;"><strong>Diagnostic Result: </strong> 
     <span style="color: {% if prediction == 'No DR' %}green{% else %}red{% endif %}; font-weight: bold;">
-      {{ prediction }}
+      {% if prediction == 'No DR' %}<i class="fas fa-check-circle"></i>{% else %}<i class="fas fa-exclamation-triangle"></i>{% endif %} {{ prediction }}
     </span>
   </p>
 
   <div class="image-row">
     <div class="image-column">
-      <h3>Original Image:</h3>
+      <h3><i class="fas fa-image"></i> Original Image:</h3>
       <img src="/media/{{ original }}" alt="Original Image">
     </div>
     <div class="image-column">
-      <h3>Preprocessed Image:</h3>
+      <h3><i class="fas fa-filter"></i> Preprocessed Image:</h3>
       <img src="/media/{{ preprocessed }}" alt="Preprocessed Image">
     </div>
     <div class="image-column">
-      <h3>Model Focused Area (Grad-CAM):</h3>
+      <h3><i class="fas fa-crosshairs"></i> Model Focused Area (Grad-CAM):</h3>
       <img src="/media/{{ gradcam }}" alt="Grad-CAM Image">
     </div>
   </div>
 
   {% if probabilities %}
   <div class="probability-box" style="margin: 30px auto;">
-    <h3>Prediction Confidence</h3>
+    <h3><i class="fas fa-chart-bar"></i> Prediction Confidence</h3>
     <table class="probability-table">
       <thead>
         <tr><th>Class</th><th>Confidence</th></tr>
@@ -316,7 +318,7 @@
 
   <!-- Medical Disclaimer -->
   <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 10px; margin-top: 20px;">
-    <h4 style="color: #856404; margin-top: 0;">⚕️ Medical Disclaimer:</h4>
+    <h4 style="color: #856404; margin-top: 0;"><i class="fas fa-user-md"></i> Medical Disclaimer:</h4>
     <p style="color: #856404; margin-bottom: 0;">
       This AI system is for screening purposes only. Always consult with a qualified ophthalmologist 
       or healthcare professional for proper medical diagnosis and treatment decisions.
