@@ -21,7 +21,7 @@ The system classifies retinal images into 5 categories:
 - **Proliferative DR**: Proliferative Diabetic Retinopathy
 
 ##  Demo
-
+**Live** at `https://retinascan-ebc4e1faa232.herokuapp.com`
 ### Interface
 ### upload/drag-and-drop fundus image
 ![Screenshot of the web interface](static/img/demo-interface.png)
@@ -126,7 +126,7 @@ Visit `http://localhost:8000` in your browser.
 
 ##  Usage
 
-1. **Access the web interface** at `http://localhost:8000`
+1. **Access the web interface** at `https://retinascan-ebc4e1faa232.herokuapp.com`
 2. **Upload an image** by:
    - Dragging and dropping a retinal image
    - Clicking "Choose retinal image" to select a file
@@ -152,15 +152,8 @@ Visit `http://localhost:8000` in your browser.
 - [ ] Improve model accuracy with more training data
 - [ ] Add mobile-responsive design
 
-##  Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
 
-##  License
 
 
 ##  Author
